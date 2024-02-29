@@ -1,55 +1,58 @@
-import React, { useEffect, useState } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
-import { useNavigate } from 'react-router-dom';
-import { startExamAction } from '../redux/question_reducer';
-import { updateResultAction } from '../redux/result_reducer';
+import React, { useEffect, useState } from 'react'
+import { useDispatch, useSelector } from 'react-redux'
 
-export default function Questions() {
-  const history = useNavigate();
-  const dispatch = useDispatch();
-  const { questions, answers, trace } = useSelector((state) => state.questions);
-  const result = useSelector((state) => state.result.result);
-  const [checked, setChecked] = useState(undefined);
 
-  useEffect(() => {
-    dispatch(startExamAction());
-  }, [dispatch]);
+/** Custom Hook */
+import { useFetchQestion } from '../hooks/FetchQuestion'
+import { updateResult } from '../hooks/setResult'
 
-  function onSelect(i) {
-    setChecked(i);
-    dispatch(updateResultAction({ trace, checked }));
-  }
 
-  function moveToNextQuestion() {
-    if (trace < questions.length - 1) {
-      history.push(`/quiz/${trace + 1}`);
-    } else {
-      history.push('/result');
+export default function Questions({ onChecked }) {
+
+    const [checked, setChecked] = useState(undefined)
+    const { trace } = useSelector(state => state.questions);
+    const result = useSelector(state => state.result.result);
+    const [{ isLoading, apiData, serverError}] = useFetchQestion() 
+
+    const questions = useSelector(state => state.questions.queue[state.questions.trace])
+    const dispatch = useDispatch()
+
+    useEffect(() => {
+        dispatch(updateResult({ trace, checked}))
+    }, [checked])
+    
+    function onSelect(i){
+        onChecked(i)
+        setChecked(i)
+        dispatch(updateResult({ trace, checked}))
     }
-  }
+
+
+    if(isLoading) return <h3 className='text-light'>isLoading</h3>
+    if(serverError) return <h3 className='text-light'>{serverError || "Unknown Error"}</h3>
 
   return (
     <div className='questions'>
-      <h2 className='text-light'>{questions[trace]?.question}</h2>
+        <h2 className='text-light'>{questions?.question}</h2>
 
-      <ul key={questions[trace]?.id}>
-        {questions[trace]?.options.map((q, i) => (
-          <li key={i}>
-            <input
-              type='radio'
-              value={false}
-              name='options'
-              id={`q${i}-option`}
-              onChange={() => onSelect(i)}
-            />
-            <label className='text-primary' htmlFor={`q${i}-option`}>{q}</label>
-            <div className={`check ${result[trace] === i ? 'checked' : ''}`} />
-          </li>
-        ))}
-      </ul>
-      <button className='btn next' onClick={moveToNextQuestion}>
-        {trace < questions.length - 1 ? 'Next' : 'Finish'}
-      </button>
+        <ul key={questions?.id}>
+            {
+                questions?.options.map((q, i) => (
+                    <li key={i}>
+                        <input 
+                            type="radio"
+                            value={false}
+                            name="options"
+                            id={`q${i}-option`}
+                            onChange={() => onSelect(i)}
+                        />
+
+                        <label className='text-primary' htmlFor={`q${i}-option`}>{q}</label>
+                        <div className={`check ${result[trace] == i ? 'checked' : ''}`}></div>
+                    </li>
+                ))
+            }
+        </ul>
     </div>
-  );
+  )
 }

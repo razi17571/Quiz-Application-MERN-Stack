@@ -9,7 +9,6 @@ export const questionReducer = createSlice({
         trace : 0
     },
     reducers : {
-        fetchQuestions : () => {},
         startExamAction : (state, action) => {
             let { question, answers} = action.payload
             return {
