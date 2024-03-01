@@ -2,7 +2,7 @@ import mongoose from "mongoose";
 
 export default async function connect(){
     try {
-        await mongoose.connect(`mongodb+srv://${process.env.MONGO_USERNAME}:${process.env.MONGO_PASS}@quiz.tfajnzy.mongodb.net/`);
+        await mongoose.connect(process.env.ATLAS_URI);
         console.log("Database Connected");
     } catch (error) {
         console.log("Invalid Database Connection");
